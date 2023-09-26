@@ -1,5 +1,5 @@
 #include <windows.h>
-
+#include <sstream>
 const wchar_t gClassName[] = L"MyWindowClass";
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -65,11 +65,58 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	return msg.wParam;
 }
 
+void OnPaint(HWND hwnd)
+{
+	PAINTSTRUCT ps;
+	HDC hdc = BeginPaint(hwnd, &ps);
+
+	HPEN redPen = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
+	HBRUSH hatchBrush = CreateHatchBrush(HS_CROSS, RGB(255, 0, 0));
+	SelectObject(hdc, redPen);
+	SelectObject(hdc, hatchBrush);
+	Rectangle(hdc, 0, 0, 100, 100);
+	DeleteObject(hatchBrush);
+	EndPaint(hwnd, &ps);
+}
 // 4. 윈도우 프로시저 작성
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
+		case WM_PAINT:
+		{
+			OnPaint(hwnd);
+		}
+		break;
+		case WM_KEYDOWN:
+		{
+			std::ostringstream oss;
+			oss << "Virtual Keycode = " << wParam << std::endl;
+			OutputDebugStringA(oss.str().c_str());
+		}
+		break;
+		case WM_LBUTTONDOWN:
+		{
+			HDC hdc;
+
+			// GetDC 이후 ReleaseDC를 해줘야 메모리 누수가 없음. 
+			hdc = GetDC(hwnd);
+			Rectangle(hdc, 0, 0, 100, 100);
+			ReleaseDC(hwnd, hdc);
+
+			// *** C++ 언어 스타일 ***
+			std::ostringstream oss;
+			oss << "x : " << LOWORD(lParam) << ", y : " << HIWORD(lParam) << std::endl;
+			OutputDebugStringA(oss.str().c_str());
+			
+
+			// *** C언어 스타일 ***
+			//int x = lParam;
+			//int y = lParam;
+			//// 디버깅 용 outputstring 함수
+			//OutputDebugStringA("Hello\n");
+		}
+		break;
 		case WM_CLOSE:
 		{
 			DestroyWindow(hwnd);
